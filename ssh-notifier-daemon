@@ -1,0 +1,29 @@
+#!/bin/bash
+
+sessions_file="/var/log/ssh-notifier-daemon/sessions"
+sessions_file_max_lines=11
+
+while true; do
+	pwd_connection_line=$(journalctl -u ssh -n 2 --no-pager | tail -n 2 | head -n 1 | grep -i accepted)
+
+	session=$(echo "$pwd_connection_line" | awk '{print $5}' | tr -dc '0-9')
+	address=$(echo "$pwd_connection_line" | awk '{print $11}')
+	user=$(echo "$pwd_connection_line" | awk '{print $9}')
+
+	if ! cat "$sessions_file" | grep -w "$session" &>/dev/null; then
+		printf "Received new Connection request from [%s] with user [%s]\n" "$address" "$user"
+
+		session_file_lines=$(wc -l "$sessions_file" | awk '{print $1}')
+
+		if [[ $session_file_lines > $sessions_file_max_lines || $session_file_lines == $sessions_file_max_lines ]]; then
+			echo "" > "$sessions_file"
+		fi
+
+		echo "$session" >> "$sessions_file"
+
+		# TODO pass email value
+		printf "Received new Connection request from [%s] with user [%s]\n" "$address" "$user" | ssmtp YOUR_EMAIL@gmail.com
+	fi
+
+	# sleep 0.1
+done

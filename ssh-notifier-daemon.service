@@ -1,0 +1,9 @@
+[Unit]
+Description=ssh-notifier-daemon
+
+[Service]
+ExecStart=/bin/bash /usr/bin/ssh-notifier-daemon
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
